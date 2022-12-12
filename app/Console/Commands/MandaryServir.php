@@ -31,6 +31,7 @@ class MandaryServir extends Command
      */
     public function handle()
     {
+        try {
             $response = Http::retry(20 ,300)->post('https://10.170.20.95:50000/b1s/v1/Login',[
                 'CompanyDB' => 'INVERSIONES',
                 'UserName' => 'Transportadoras',
@@ -44,20 +45,19 @@ class MandaryServir extends Command
             $separador = "-----------======= facturas del dia ".$time->format('Y-m-d h:i:s A')." ========-------------";
             Storage::append('Guardados.txt', $separador.' Inicio');
             Storage::append('Errores.txt', $separador.' Inicio');
-            $datos = Http::get('https://mandaryservir.co/mys/users/remesasivanagro/'.$date->format('Y-m-d'))->json();
+            $datos = Http::get('https://mandaryservir.co/mys/users/remesasivanagro/'.$date->format('Y-m-d'))['Guia'];
             
             
-            // $separador = "-----------======= facturas del dia 2022/08/01 ========-------------";
+            // $separador = "-----------======= facturas del dia 2022/09/05 ========-------------";
             // Storage::append('Guardados.txt', $separador.' Inicio');
             // Storage::append('Errores.txt', $separador.' Inicio');
-            // $datos = Http::get('https://mandaryservir.co/mys/users/remesasivanagro/2022-08-01')->json();
+            // $datos = Http::get('https://mandaryservir.co/mys/users/remesasivanagro/2022-09-05')->json();
     
-            try {
                 if (!isset($datos['alert'])) {
                     $datos = $datos['Guia'];
         
                     foreach ($datos as $key => $value) {
-                        try {
+                        // try {
                             foreach ($value['Venta']['facturasdocref1'] as $key => $val1) {
                                 if ($val1 !== '') {
                                     $numeroD = $val1;
@@ -70,7 +70,7 @@ class MandaryServir extends Command
                                             if ($envio_sap !== '') {
                                                 if (isset($envio_sap[0]['DocEntry'])) {
                                                     $id_doc = $envio_sap[0]['DocEntry'];
-                                                    $save_sap = Http::retry(20, 300)->withToken($session)->patch("https://10.170.20.95:50000/b1s/v1/Invoices(".$id_doc.")", [
+                                                    $save_sap = Http::retry(20,  300)->withToken($session)->patch("https://10.170.20.95:50000/b1s/v1/Invoices(".$id_doc.")", [
                                     
                                                         "U_R_GUIA"=>$value['Venta']['remesa'],
                                                         "U_F_GUIA"=>$value['Venta']['fecha'],
@@ -89,7 +89,7 @@ class MandaryServir extends Command
                                             
                                             Storage::append('Guardados.txt', $texto);
                                         }else if ($inicio == 10) {
-                                            $envio_sap = Http::retry(20, 300)->withToken($session)->get('https://10.170.20.95:50000/b1s/v1/DeliveryNotes?$select = DocEntry,DocNum &$filter=DocNum eq '.$numeroD.' and U_R_GUIA eq null')->json();
+                                            $envio_sap = Http::retry(20, 300)->withToken($session)->get('https://10.170.20.95:50000/b1s/v1/DeliveryNotes?$select = DocEntry,DocNum &$filter=DocNum eq '.$numeroD)->json();
                                             $envio_sap = $envio_sap['value'];
                                             if ($envio_sap !== '') {
                                                 if (isset($envio_sap[0]['DocEntry'])) {
@@ -246,38 +246,41 @@ class MandaryServir extends Command
                                     }
                                 }
                             }
-                        } catch (\Throwable $th) {
+                        // } catch (\Throwable $th) {
     
-                            $response = Http::retry(20 ,300)->post('https://10.170.20.95:50000/b1s/v1/Login',[
-                                'CompanyDB' => 'INVERSIONES',
-                                'UserName' => 'Transportadoras',
-                                'Password' => 'Asdf1234$',
-                            ])->json();
+                        //     $response = Http::retry(20 ,300)->post('https://10.170.20.95:50000/b1s/v1/Login',[
+                        //         'CompanyDB' => 'INVERSIONES',
+                        //         'UserName' => 'Transportadoras',
+                        //         'Password' => 'Asdf1234$',
+                        //     ])->json();
                     
-                            $session = $response['SessionId']; 
+                        //     $session = $response['SessionId']; 
     
-                            Storage::append('Errores.txt', '------------------------- Error individual en Guia N° -----------'.$numeroD.' -------------------------------------------------------- \n'.$th);
-                        }
+                        //     Storage::append('Errores.txt', '------------------------- Error individual en Guia N° -----------'.$numeroD.' -------------------------------------------------------- \n'.$th);
+                        // }
                        
                     }
                 }else {
                     Storage::append('Errores.txt', 'Json caido mandar y servir "'.$datos['alert'].'" ');
                 }
-            } catch (\Throwable $th) {
-                $response = Http::retry(20 ,300)->post('https://10.170.20.95:50000/b1s/v1/Login',[
-                    'CompanyDB' => 'INVERSIONES',
-                    'UserName' => 'Transportadoras',
-                    'Password' => 'Asdf1234$',
-                ])->json();
+            // } catch (\Throwable $th) {
+            //     $response = Http::retry(20 ,300)->post('https://10.170.20.95:50000/b1s/v1/Login',[
+            //         'CompanyDB' => 'INVERSIONES',
+            //         'UserName' => 'Transportadoras',
+            //         'Password' => 'Asdf1234$',
+            //     ])->json();
         
-                $session = $response['SessionId'];
+            //     $session = $response['SessionId'];
     
-                Storage::append('Errores.txt', '---------------------------------------------------------- Error Guia N° '.$numeroD.' ---------------------------------------------------------------- \n'.$th);
-            }
-            
+            //     Storage::append('Errores.txt', '---------------------------------------------------------- Error Guia N° '.$numeroD.' ---------------------------------------------------------------- \n'.$th);
+            // }
 
-        Storage::append('Guardados.txt', $separador .' Final');
-        Storage::append('Errores.txt', $separador.' Final');
+            Storage::append('Guardados.txt', $separador .' Final');
+            Storage::append('Errores.txt', $separador.' Final');
 
+        } catch (\Throwable $th) {
+            $texto = "Malo.". $th;
+            Storage::append('Errores.txt', $texto);
+        }
     }
 }

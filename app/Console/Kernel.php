@@ -15,11 +15,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('command:Mandaryservir')->everyMinute()
-        // ->timezone('America/Bogota');        
+        $schedule->command('command:Mandaryservir')->everyMinute();        
         
-        $schedule->command('command:Mandaryservir')->twiceDaily(15, 22)
-        ->timezone('America/Bogota');        
+        // $schedule->command('command:Mandaryservir')->twiceDaily(15, 22)
+        // ->timezone('America/Bogota');        
     }
 
     /**
